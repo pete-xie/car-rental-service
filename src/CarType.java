@@ -3,10 +3,17 @@ package src;
  * Represents types of cars. Includes all types available for reservation.
  */
 public enum CarType {
-    SEDAN, SUV, VAN;
+    SEDAN("Sedan"), 
+    SUV("SUV"), 
+    VAN("Van");
 
-    @Override
-    public String toString(){
-        return name().charAt(0) + name().substring(1).toLowerCase();
+    private final String label;
+
+    private CarType(String label){
+        this.label = label;
+    }
+
+    public String getLabel(){
+        return label;
     }
 }
