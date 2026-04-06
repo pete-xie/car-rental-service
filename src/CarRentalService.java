@@ -57,7 +57,6 @@ public class CarRentalService {
     }
 
 
-
     //reserve method, needs to validate if the booking is valid-> if there are enough cars at that time slot.
     //we can either count the amount of bookings that overlap this time, or we can
     public Reservation reserve(String customerName, CarType carType, LocalDateTime startDateTime, int days) throws NoAvailibilityException{

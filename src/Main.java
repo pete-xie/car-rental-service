@@ -31,7 +31,7 @@ public class Main {
 
 
         try {
-            Reservation reservation = service.reserve("John", CarType.VAN, LocalDateTime.of(2026, 5, 6, 16, 30), 2);
+            Reservation reservation = service.reserve("Paul", CarType.VAN, LocalDateTime.of(2026, 5, 6, 16, 30), 2);
             System.out.println(reservation);
             reservation.reschedule(LocalDateTime.of(2026, 5, 6, 16, 30), 5);
             System.out.println(reservation);
