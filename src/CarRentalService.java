@@ -67,7 +67,7 @@ public class CarRentalService {
         int carCapacity = fleetSizeByCarType.get(carType);
         if(overlappingReservations >= carCapacity){
             throw new NoAvailibilityException(
-                "No %s available on %s for %d. All %d cars are booked".formatted(carType.getLabel(), startDateTime, days, carCapacity)
+                "No %s available on %s for %d days. All %d cars are booked".formatted(carType.getLabel(), startDateTime, days, carCapacity)
             );
             //could perhaps give the earliest available
         }
@@ -118,7 +118,7 @@ public class CarRentalService {
         int carCapacity = fleetSizeByCarType.get(currCarType);
         if(overlappingReservations >= carCapacity){
             throw new NoAvailibilityException(
-                "No %s available on %s. All %d cars booked".formatted(currCarType.getLabel(), newStartDateTime, carCapacity)
+                "No %s available on %s for %d days. All %d cars booked".formatted(currCarType.getLabel(), newStartDateTime, newDays, carCapacity)
             );
         }
         existingReservation.reschedule(newStartDateTime, newDays);
