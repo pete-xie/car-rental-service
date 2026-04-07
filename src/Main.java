@@ -22,7 +22,7 @@ public class Main {
                 result.add(new ReservationResult("John", true, reservation.getReservationId(), null));
             } catch(IllegalArgumentException e){
                 result.add(new ReservationResult("John", false, null, e.getMessage()));
-            } catch(NoAvailibilityException e){
+            } catch(NoAvailabilityException e){
                 result.add(new ReservationResult("John", false, null, e.getMessage()));
             } catch(Exception e){
                 result.add(new ReservationResult("John", false, null, e.getMessage()));
@@ -39,7 +39,7 @@ public class Main {
             System.out.println();
         } catch (IllegalArgumentException e) {
             result.add(new ReservationResult("John", false, null, e.getMessage()));
-        } catch (NoAvailibilityException e) {
+        } catch (NoAvailabilityException e) {
             result.add(new ReservationResult("John", false, null, e.getMessage()));
         } catch (Exception e) {
             result.add(new ReservationResult("John", false, null, e.getMessage()));

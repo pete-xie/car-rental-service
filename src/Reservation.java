@@ -14,9 +14,6 @@ public class Reservation {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private static final int MAX_RESERVATION = 365;
 
-    //Requirements are: CarType, Date and Time, and Number of Days
-    //consider hours each day vs reserved for full days. Rentals are usually full days
-    //consider if we want to modify reservations. In memory, it is probably best if we allow it. We don't need to record event history
     private final String reservationId;
     private final String customerName;
     private final CarType carType;
@@ -44,13 +41,23 @@ public class Reservation {
         this.reservationId = UUID.randomUUID().toString();
     }
 
+    //Copy constructor
+    public Reservation(Reservation original){
+        this.customerName = original.customerName;
+        this.carType = original.carType;
+        this.numberOfDays = original.numberOfDays;
+        this.startDateTime = original.startDateTime;
+        this.endDateTime = original.endDateTime;
+        this.reservationId = original.reservationId;
+    }
+
     //getters
     public String getReservationId(){ return reservationId; }
     public String getCustomerName(){ return customerName; }
     public CarType getCarType(){ return carType; }
     public int getNumberOfDays(){ return numberOfDays; }
-    public LocalDateTime getStartTime(){ return startDateTime; }
-    public LocalDateTime getEndTime(){ return endDateTime; }
+    public LocalDateTime getStartDateTime(){ return startDateTime; }
+    public LocalDateTime getEndDateTime(){ return endDateTime; }
 
     /**
      * Handles rescheduling a reservation to ensure endDateTime is set with startDateTime. 
@@ -66,11 +73,13 @@ public class Reservation {
         this.endDateTime = newStartDateTime.plusDays(newDays);
     }
 
+    //checks if current reservation has a conflict at given time
     public boolean overlapsWith(LocalDateTime start, int days){
         LocalDateTime end = start.plusDays(days);
         return this.startDateTime.isBefore(end) && this.endDateTime.isAfter(start);
     }
 
+    //helper validation method. Enforces a valid number of days for reservation.
     private void validateDuration(int days){
         if(days < 1 || days > MAX_RESERVATION){
             throw new IllegalArgumentException("Number of days '%d' is outside of valid range (1-%d)".formatted(days, MAX_RESERVATION));
@@ -83,21 +92,5 @@ public class Reservation {
             "Reservation: {id=%s, customer=%s, car_type=%s, days=%d, start=%s, end=%s",
             reservationId, customerName, carType, numberOfDays, startDateTime.format(FORMATTER), endDateTime.format(FORMATTER)
         );
-    }
-
-    @Override
-    public boolean equals(Object o){
-        if(this == o){            
-            return true;
-        }
-        if(!(o instanceof Reservation r)){
-            return false;
-        }
-        return Objects.equals(reservationId, r.reservationId);
-    }
-
-    @Override 
-    public int hashCode(){
-        return Objects.hash(reservationId);
     }
 }

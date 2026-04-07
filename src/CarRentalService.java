@@ -18,27 +18,20 @@ import java.util.Optional;
 public class CarRentalService {
 
 
-    //default number of cars for each type
     public static final int DEFAULT_SEDAN_COUNT = 5;
     public static final int DEFAULT_SUV_COUNT = 3;
     public static final int DEFAULT_VAN_COUNT = 1;
 
-    //keep track of car count and reservations
-    //car count is type to number, car types are a hard requirement
+
     private final Map<CarType, Integer> fleetSizeByCarType;
-    //reservation could be String(id) to Reservation. Consider if we want to seperate by cartype
-    //map id to cartype, so individual reservation ids only interact with others of the same type
-    //size considerations-> numTypes * numCars * numReservations(lets say 1 per day, for the next year-> 365)
     private final Map<CarType, Map<String, Reservation>> reservationsByCarType;
     private final Map<String, CarType> carTypeById;
 
     public CarRentalService(){
-        //defaults
         this(DEFAULT_SEDAN_COUNT, DEFAULT_SUV_COUNT, DEFAULT_VAN_COUNT);
     }
 
     public CarRentalService(int sedanCount, int suvCount, int vanCount){
-        //explicit
         validateCount(CarType.SEDAN, sedanCount);
         validateCount(CarType.SUV, suvCount);
         validateCount(CarType.VAN, vanCount);
@@ -57,43 +50,63 @@ public class CarRentalService {
     }
 
 
-    //reserve method, needs to validate if the booking is valid-> if there are enough cars at that time slot.
-    //we can either count the amount of bookings that overlap this time, or we can
-    public Reservation reserve(String customerName, CarType carType, LocalDateTime startDateTime, int days) throws NoAvailibilityException{
-        //validate input
-        int overlappingReservations = countOverlappingReservations(carType, startDateTime, days);
-
+    /**
+     * Reserves a car of the given type for the given customer for the given number of days starting at the given date/time. 
+     * 
+     * @param customerName
+     * @param carType
+     * @param startDateTime
+     * @param days
+     * @return newly created Reservation
+     * @throws NoAvailabilityException if there is no car of the requested type available for the given date/time.
+     */
+    public Reservation reserve(String customerName, CarType carType, LocalDateTime startDateTime, int days) throws NoAvailabilityException{
+        //Reservation is created, only proceeds if inputs are valid
+        Reservation newReservation = new Reservation(customerName, carType, startDateTime, days);
+    
+        //Check if there is availability
+        int overlappingReservations = countOverlappingReservations(carType, startDateTime, days, "");
         int carCapacity = fleetSizeByCarType.get(carType);
         if(overlappingReservations >= carCapacity){
-            throw new NoAvailibilityException(
+            throw new NoAvailabilityException(
                 "No %s available on %s for %d days. All %d cars are booked".formatted(carType.getLabel(), startDateTime, days, carCapacity)
             );
-            //could perhaps give the earliest available
         }
         
-        Reservation reservation = new Reservation(customerName, carType, startDateTime, days);
+        //Valid reservation, save to maps
+        reservationsByCarType.get(carType).put(newReservation.getReservationId(), newReservation);
+        carTypeById.put(newReservation.getReservationId(), carType);
         
-        reservationsByCarType.get(carType).put(reservation.getReservationId(), reservation);
-        carTypeById.put(reservation.getReservationId(), carType);
-        
-        return reservation;
+        return newReservation;
     }
-    //get method. Get all, get by type, by id, by date/time, by customer?
+    
+    //GET method
     public Optional<Reservation> findById(String reservationId){
         CarType currCarType = carTypeById.get(reservationId);
         if(currCarType == null){
             return Optional.empty();
         }
-        return Optional.of(reservationsByCarType.get(currCarType).get(reservationId));
+        
+        Reservation currentReservation = reservationsByCarType.get(currCarType).get(reservationId);
+        return Optional.of(new Reservation(currentReservation));
     }
 
+    //GET method
     public List<Reservation> getAllReservations(){
         return reservationsByCarType.values().stream()
                 .flatMap(m -> m.values().stream())
+                .map(Reservation::new)
                 .toList();
     }
 
-    //cancel/delete reservation method
+    //GET method
+    public List<Reservation> getReservationsByCarType(CarType carType){
+        return reservationsByCarType.get(carType).values().stream()
+                .map(Reservation::new)
+                .toList();
+    }
+
+    //DELETE method
     public void cancel(String reservationId) throws NoSuchElementException{
         CarType currCarType = carTypeById.get(reservationId);
         if(currCarType == null){
@@ -104,19 +117,19 @@ public class CarRentalService {
         carTypeById.remove(reservationId);
     }
     
-    //update reservation method
-    public Reservation update(String reservationId, LocalDateTime newStartDateTime, int newDays) throws NoAvailibilityException, NoSuchElementException{
+    //PUT method
+    public Reservation update(String reservationId, LocalDateTime newStartDateTime, int newDays) throws NoAvailabilityException, NoSuchElementException{
         CarType currCarType = carTypeById.get(reservationId);
         if(currCarType == null){
             throw new NoSuchElementException("No reservation found with ID: " + reservationId);
         }
 
         Reservation existingReservation = reservationsByCarType.get(currCarType).get(reservationId);
-        int overlappingReservations = countOverlappingReservations(currCarType, newStartDateTime, newDays);
+        int overlappingReservations = countOverlappingReservations(currCarType, newStartDateTime, newDays, existingReservation.getReservationId());
 
         int carCapacity = fleetSizeByCarType.get(currCarType);
         if(overlappingReservations >= carCapacity){
-            throw new NoAvailibilityException(
+            throw new NoAvailabilityException(
                 "No %s available on %s for %d days. All %d cars booked".formatted(currCarType.getLabel(), newStartDateTime, newDays, carCapacity)
             );
         }
@@ -124,9 +137,13 @@ public class CarRentalService {
         return existingReservation;
     }
 
-    private int countOverlappingReservations(CarType carType, LocalDateTime startDateTime, int days){
+    //Helper that counts how many reservations overlap with given time, returns an int count.
+    private int countOverlappingReservations(CarType carType, LocalDateTime startDateTime, int days, String currentResId){
         int count = 0;
         for(Reservation r: reservationsByCarType.get(carType).values()){
+            if(r.getReservationId().equals(currentResId)){
+                continue;
+            }
             if(r.overlapsWith(startDateTime, days)){
                 count++;
             }
@@ -135,6 +152,7 @@ public class CarRentalService {
         return count;
     }
 
+    //Helper validation method used in constructor. Enforces that fleet size cannot be negative
     private void validateCount(CarType carType, int carCount){
         if(carCount < 0){
             throw new IllegalArgumentException(carType.getLabel() + " fleet size cannot be negative");
