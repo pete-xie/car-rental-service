@@ -1,7 +1,7 @@
 package src;
 
 /**
- * Throws exception to be handled when a reservation cannot be fulfilled, due to no cars being available.
+ * Throws exception to be handled when a reservation based request cannot be fulfilled.
  */
 public class NoAvailabilityException extends Exception {
 

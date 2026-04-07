@@ -2,7 +2,6 @@ package src;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -10,9 +9,9 @@ import java.util.UUID;
  */
 public class Reservation {
     
+    public static final int MAX_RESERVATION = 365;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-    private static final int MAX_RESERVATION = 365;
 
     private final String reservationId;
     private final String customerName;
@@ -63,10 +62,13 @@ public class Reservation {
      * Handles rescheduling a reservation to ensure endDateTime is set with startDateTime. 
      * Ensures endDateTime can never occur before startDateTime
      * 
-     * @param newStartDateTime
+     * @param newStartDateTime must not be null
      * @param newDays must be valid, between 1 and MAX_RESERVATION
      */
     public void reschedule(LocalDateTime newStartDateTime, int newDays){
+        if(newStartDateTime == null){
+            throw new IllegalArgumentException("Start date time object cannot be null.");
+        }
         validateDuration(newDays);
         this.startDateTime = newStartDateTime;
         this.numberOfDays = newDays;
@@ -82,14 +84,14 @@ public class Reservation {
     //helper validation method. Enforces a valid number of days for reservation.
     private void validateDuration(int days){
         if(days < 1 || days > MAX_RESERVATION){
-            throw new IllegalArgumentException("Number of days '%d' is outside of valid range (1-%d)".formatted(days, MAX_RESERVATION));
+            throw new IllegalArgumentException("Number of days '%d' is outside of valid range (1-%d).".formatted(days, MAX_RESERVATION));
         }
     }
 
     @Override
     public String toString(){
         return String.format(
-            "Reservation: {id=%s, customer=%s, car_type=%s, days=%d, start=%s, end=%s",
+            "Reservation: {id=%s, customer=%s, car_type=%s, days=%d, start=%s, end=%s}",
             reservationId, customerName, carType, numberOfDays, startDateTime.format(FORMATTER), endDateTime.format(FORMATTER)
         );
     }

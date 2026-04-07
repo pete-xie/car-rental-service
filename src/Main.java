@@ -3,6 +3,7 @@ package src;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Main {
     public record ReservationResult(
@@ -13,6 +14,25 @@ public class Main {
     ) {}    
 
     public static void main(String[] args) {
+        try{
+            CarRentalService service = new CarRentalService(1, 2, CarRentalService.MAX_CAR_COUNT);
+
+            Reservation r = service.reserve("Jay", CarType.VAN, LocalDateTime.of(2025, 6, 1, 10, 0), 2);
+            Optional<Reservation> found = service.findById(r.getReservationId());
+            int newDays = 5;
+
+            //Reschedule reservation from GET
+            found.get().reschedule(LocalDateTime.of(2025, 6, 1, 10, 0), newDays);
+
+            System.out.println(found.get());
+            System.out.println(r);
+            System.out.println();
+        } catch(IllegalArgumentException e){
+            System.out.println(e.getMessage());
+        } catch(NoAvailabilityException e){
+            System.out.println(e.getMessage());
+        }
+
         CarRentalService service = new CarRentalService();
         List<ReservationResult> result = new ArrayList<>();
         

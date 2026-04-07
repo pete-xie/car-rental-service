@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -18,6 +19,7 @@ import java.util.Optional;
 public class CarRentalService {
 
 
+    public static final int MAX_CAR_COUNT = 2000000;
     public static final int DEFAULT_SEDAN_COUNT = 5;
     public static final int DEFAULT_SUV_COUNT = 3;
     public static final int DEFAULT_VAN_COUNT = 1;
@@ -69,7 +71,7 @@ public class CarRentalService {
         int carCapacity = fleetSizeByCarType.get(carType);
         if(overlappingReservations >= carCapacity){
             throw new NoAvailabilityException(
-                "No %s available on %s for %d days. All %d cars are booked".formatted(carType.getLabel(), startDateTime, days, carCapacity)
+                "No %s available on %s for %d days. All %d cars are booked.".formatted(carType.getLabel(), startDateTime, days, carCapacity)
             );
         }
         
@@ -77,17 +79,23 @@ public class CarRentalService {
         reservationsByCarType.get(carType).put(newReservation.getReservationId(), newReservation);
         carTypeById.put(newReservation.getReservationId(), carType);
         
-        return newReservation;
+        return new Reservation(newReservation);
     }
     
     //GET method
     public Optional<Reservation> findById(String reservationId){
+        Objects.requireNonNull(reservationId, "ReservationId must not be null");
+
         CarType currCarType = carTypeById.get(reservationId);
         if(currCarType == null){
             return Optional.empty();
         }
         
         Reservation currentReservation = reservationsByCarType.get(currCarType).get(reservationId);
+
+        if (currentReservation == null) {
+            return Optional.empty();
+        }
         return Optional.of(new Reservation(currentReservation));
     }
 
@@ -101,6 +109,7 @@ public class CarRentalService {
 
     //GET method
     public List<Reservation> getReservationsByCarType(CarType carType){
+        Objects.requireNonNull(carType, "CarType must not be null");
         return reservationsByCarType.get(carType).values().stream()
                 .map(Reservation::new)
                 .toList();
@@ -108,6 +117,7 @@ public class CarRentalService {
 
     //DELETE method
     public void cancel(String reservationId) throws NoSuchElementException{
+        Objects.requireNonNull(reservationId, "ReservationId must not be null");
         CarType currCarType = carTypeById.get(reservationId);
         if(currCarType == null){
             throw new NoSuchElementException("No reservation found with ID: " + reservationId);
@@ -119,6 +129,7 @@ public class CarRentalService {
     
     //PUT method
     public Reservation update(String reservationId, LocalDateTime newStartDateTime, int newDays) throws NoAvailabilityException, NoSuchElementException{
+        Objects.requireNonNull(reservationId, "ReservationId must not be null");
         CarType currCarType = carTypeById.get(reservationId);
         if(currCarType == null){
             throw new NoSuchElementException("No reservation found with ID: " + reservationId);
@@ -130,7 +141,7 @@ public class CarRentalService {
         int carCapacity = fleetSizeByCarType.get(currCarType);
         if(overlappingReservations >= carCapacity){
             throw new NoAvailabilityException(
-                "No %s available on %s for %d days. All %d cars booked".formatted(currCarType.getLabel(), newStartDateTime, newDays, carCapacity)
+                "No %s available on %s for %d days. All %d cars booked.".formatted(currCarType.getLabel(), newStartDateTime, newDays, carCapacity)
             );
         }
         existingReservation.reschedule(newStartDateTime, newDays);
@@ -155,7 +166,10 @@ public class CarRentalService {
     //Helper validation method used in constructor. Enforces that fleet size cannot be negative
     private void validateCount(CarType carType, int carCount){
         if(carCount < 0){
-            throw new IllegalArgumentException(carType.getLabel() + " fleet size cannot be negative");
+            throw new IllegalArgumentException(carType.getLabel() + " fleet size cannot be negative.");
+        }
+        if(carCount > MAX_CAR_COUNT){
+            throw new IllegalArgumentException(carType.getLabel() + " fleet size cannot be greater than " + MAX_CAR_COUNT + ".");
         }
     }
 }
