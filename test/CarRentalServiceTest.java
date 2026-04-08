@@ -435,17 +435,16 @@ class CarRentalServiceTest {
     }
 
     @Test
-    @DisplayName("Update throws IllegalArgumentException when Date is null")
-    void updateWithNullDateThrows() throws NoAvailabilityException {
-        Reservation r = system.reserve("Carl", CarType.VAN, BASE, 2);
-        assertThrows(IllegalArgumentException.class, () ->
-                system.update(r.getReservationId(), null, 2));
+    @DisplayName("Update throws NullPointerException when ID is invalid")
+    void updateWithInvalidIdThrows() {
+        assertThrows(NoSuchElementException.class, () ->
+                system.update("unknown-id", BASE, 2));
     }
 
     @Test
-    @DisplayName("Update throws NoAvailibilityException when Id is invalid")
-    void updateWithInvalidIdThrows() throws NoAvailabilityException {
-        Reservation r = system.reserve("Mina", CarType.VAN, BASE, 2);
+    @DisplayName("Update throws IllegalArgumentException when Date is null")
+    void updateWithNullDateThrows() throws NoAvailabilityException {
+        Reservation r = system.reserve("Carl", CarType.VAN, BASE, 2);
         assertThrows(IllegalArgumentException.class, () ->
                 system.update(r.getReservationId(), null, 2));
     }
@@ -475,6 +474,19 @@ class CarRentalServiceTest {
     }
 
     @Test
+    @DisplayName("Update throws NoAvailabilityException when no cars available")
+    void updateThrows() throws NoAvailabilityException {
+        system.reserve("V1", CarType.VAN, BASE, 2);
+
+        //Non overlapping reservation
+        Reservation r = system.reserve("V2", CarType.VAN, BASE.plusDays(2), 2);
+
+        //Reschedule to overlap with V1
+        assertThrows(NoAvailabilityException.class, () ->
+                system.update(r.getReservationId(), BASE, 2));
+    }
+
+    @Test
     @DisplayName("Can't reschedule using GET methods")
     void originalReservationNotReturned() throws NoAvailabilityException {
         Reservation r = system.reserve("Jay", CarType.VAN, BASE, 2);
@@ -487,4 +499,5 @@ class CarRentalServiceTest {
         //Check if orignal was updated
         assertNotEquals(r.getNumberOfDays(), found.get().getNumberOfDays());
     }
+
 }

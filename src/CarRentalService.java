@@ -19,7 +19,7 @@ import java.util.Optional;
 public class CarRentalService {
 
 
-    public static final int MAX_CAR_COUNT = 2000000;
+    public static final int MAX_CAR_COUNT = 10000;
     public static final int DEFAULT_SEDAN_COUNT = 5;
     public static final int DEFAULT_SUV_COUNT = 3;
     public static final int DEFAULT_VAN_COUNT = 1;
@@ -145,7 +145,7 @@ public class CarRentalService {
             );
         }
         existingReservation.reschedule(newStartDateTime, newDays);
-        return existingReservation;
+        return new Reservation(existingReservation);
     }
 
     //Helper that counts how many reservations overlap with given time, returns an int count.

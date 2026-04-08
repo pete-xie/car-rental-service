@@ -15,16 +15,16 @@ public class Main {
 
     public static void main(String[] args) {
         try{
-            CarRentalService service = new CarRentalService(1, 2, CarRentalService.MAX_CAR_COUNT);
+            CarRentalService service = new CarRentalService(5, 2, CarRentalService.MAX_CAR_COUNT);
 
             Reservation r = service.reserve("Jay", CarType.VAN, LocalDateTime.of(2025, 6, 1, 10, 0), 2);
-            Optional<Reservation> found = service.findById(r.getReservationId());
+            Reservation found = service.update(r.getReservationId(),LocalDateTime.of(2025, 6, 1, 10, 0), 2);
             int newDays = 5;
 
             //Reschedule reservation from GET
-            found.get().reschedule(LocalDateTime.of(2025, 6, 1, 10, 0), newDays);
+            found.reschedule(LocalDateTime.of(2025, 6, 1, 10, 0), newDays);
 
-            System.out.println(found.get());
+            System.out.println(found);
             System.out.println(r);
             System.out.println();
         } catch(IllegalArgumentException e){
@@ -64,7 +64,6 @@ public class Main {
         } catch (Exception e) {
             result.add(new ReservationResult("John", false, null, e.getMessage()));
         }
-
 
         result.forEach(System.out::println);
         System.out.println();
